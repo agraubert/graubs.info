@@ -1,0 +1,6 @@
+pandas
+sqlalchemy
+pymysql
+flask
+flask_cors
+validators
