@@ -1,8 +1,8 @@
 begin;
 
-create database if not exists graubsio;
+create database if not exists graubs;
 
-use graubsio;
+use graubs;
 
 create table if not exists lookup (
   short_code varchar(127) primary key not null,

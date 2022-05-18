@@ -3,9 +3,9 @@ import os
 from .db import Database
 from .utils import log_request, error, route, enforce_content_length
 
-app = flask.Flask('graubs.io', host='0.0.0.0', port=int(os.environ.get('GRAUBSIO_PORT', 8080)))
+app = flask.Flask('graubs.info', host='0.0.0.0', port=int(os.environ.get('GRAUBS_PORT', 8080)))
 
-GRAUBS_DB = os.environ.get('GRAUBSIO_DB', None)
+GRAUBS_DB = os.environ.get('GRAUBS_DB', None)
 
 def lookup_code(short_code):
     with Database(GRAUBS_DB, tables=['lookup']) as db:
