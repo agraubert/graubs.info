@@ -4,3 +4,4 @@ pymysql
 flask
 flask_cors
 validators
+cryptography

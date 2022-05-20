@@ -19,9 +19,18 @@
         <input type="text" name="url" value="" id='url'/>
       </p>
       <p>
+        <input type="hidden" name="csrf" value="" id='csrf'/>
+      </p>
+      <p>
         <input type="submit" name="submit" value="Submit"/>
       </p>
     </form>
+    <a href="p">Privacy Policy</a>
+    <script type='application/javascript'>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('csrf').value = "{{ csrf }}";
+      })
+    </script>
 
   </body>
 </html>

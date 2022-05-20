@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  db:
+    build:
+      context: ./db
+    image: graubs-db
+    restart: unless-stopped
+    networks:
+      - graubs
+    volumes:
+      - database:/var/lib/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
+      MYSQL_USER: web
+      MYSQL_PASSWORD: web
+  web:
+    build:
+      context: ./web
+    image: graubs-web
+    restart: unless-stopped
+    networks:
+      - graubs
+    environment:
+      GRAUBS_DB: "mysql+pymysql://web:web@db/graubs"
+    ports:
+      - "8080:8080"
+    volumes:
+      - files:/var/graubs/
+volumes:
+  database:
+    driver: local
+  files:
+    driver: local
+networks:
+  graubs:
+    driver: bridge
