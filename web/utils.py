@@ -138,6 +138,12 @@ def csrf_protected(formid):
                             (db['csrf'].c.agent_hash == agent_hash)
                         )
                     )
+                    db.execute(
+                        db['csrf'].delete.where(
+                            (db['csrf'].c.expires <= datetime.now()) |
+                            (db['csrf'].c.token == token)
+                        )
+                    )
                     if len(results) > 0:
                         return func(*args, **kwargs)
             return error("Forbidden: No CSRF token provided. If you did not intend to submit this form, someone may be trying to scam you. Otherwise, please refresh the page and try again", code=403)
