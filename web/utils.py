@@ -108,7 +108,6 @@ def authenticated(func):
 def issue_csrf(formid):
     with Database(os.environ.get('GRAUBS_DB', None), tables=['csrf']) as db:
         token = base64.b64encode(os.urandom(32)).decode()
-    with Database(os.environ.get('GRAUBS_DB', None), tables=['csrf']) as db:
         db.insert(
             'csrf',
             form=formid[-128:],
@@ -116,6 +115,12 @@ def issue_csrf(formid):
             ip=get_remote_addr(),
             expires=datetime.now() + timedelta(days=1),
             agent_hash=base64.b64encode(hashlib.md5(request.headers['User-Agent'].encode()).digest()).decode()
+        )
+        db.execute(
+            db['csrf'].delete.where(
+                (db['csrf'].c.expires <= datetime.now()) |
+                (db['csrf'].c.token == token)
+            )
         )
     return token
 
