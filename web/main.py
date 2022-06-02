@@ -112,7 +112,7 @@ def privacy():
 @app.errorhandler(404)
 @log_request
 @route
-def not_found():
+def not_found(url):
     return flask.current_app.send_static_file('404.html')
 
 
