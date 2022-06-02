@@ -118,7 +118,7 @@ def issue_csrf(formid):
         )
         db.execute(
             db['csrf'].delete.where(
-                (db['csrf'].c.expires <= datetime.now()) |
+                (db['csrf'].c.expires <= datetime.now())
             )
         )
     return token
