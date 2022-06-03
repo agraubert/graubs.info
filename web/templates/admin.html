@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Graubs.info</title>
+    <style media="screen" lang="css">
+
+    </style>
+  </head>
+  <body>
+    <h1>Graubs.info</h1>
+    <h3>Admin interface</h3>
+    <br>
+    <br>
+    <p>Create File Upload Key</p>
+    <form class="" action="/_/key" method="post">
+      <p>
+        <input type="hidden" name="csrf" value="" id='csrf_uploadkey'/>
+      </p>
+      <p>
+        <input type="submit" name="submit" value="Generate Upload Key"/>
+      </p>
+    </form>
+    <a href="p">Privacy Policy</a>
+    <script type='application/javascript'>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('csrf_uploadkey').value = "{{ csrf_uploadkey }}";
+      })
+    </script>
+
+  </body>
+</html>

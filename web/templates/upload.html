@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Graubs.info</title>
+    <style media="screen" lang="css">
+
+    </style>
+  </head>
+  <body>
+    <h1>Graubs.info</h1>
+    <h3>File Upload</h3>
+    <br>
+    <br>
+    <p>Uploaded files are stored for up to 30 days before they are deleted</p>
+    <form class="" action="/_/upload" method="post" enctype="multipart/form-data">
+      <p>
+        <label for="file_input">Upload File</label>
+        <input type="file" name="file" value="" id="file_input" required>
+      </p>
+      <p>
+        <label for="short_code">Short Code (optional)</label>
+        <input type="text" name="short_code" value="" id='short_code' pattern="\w{2,127}" placeholder="2-127 letters or numbers"/>
+      </p>
+      <p>
+        <input type="hidden" name="csrf" value="" id='csrf'/>
+        <input type="hidden" name="privkey" value="" id='privkey'/>
+      </p>
+      <p>
+        <input type="submit" name="submit" value="Submit"/>
+      </p>
+    </form>
+    <a href="p">Privacy Policy</a>
+    <script type='application/javascript'>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('csrf').value = "{{ csrf }}";
+        document.getElementById('privkey').value = "{{ privkey }}";
+      })
+    </script>
+
+  </body>
+</html>

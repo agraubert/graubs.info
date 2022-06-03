@@ -3,10 +3,12 @@ import os
 import validators
 import sqlalchemy as sqla
 import re
+from hashlib import sha256
 from .db import Database
-from .utils import log_request, error, route, enforce_content_length, csrf_protected, authenticated, issue_csrf, issue_token
+from .utils import log_request, error, route, enforce_content_length, csrf_protected, authenticated, issue_csrf, issue_token, keygen, extract_pubkey
 
 short_code_pattern = re.compile(r'\w{2,127}')
+MAX_FILESIZE = 2 * 1024 * 1024 * 1024
 
 app = flask.Flask('graubs-info', static_folder='/opt/graubs/static/', template_folder='/opt/graubs/templates/')
 
@@ -42,6 +44,112 @@ def forward(short_code):
         'Not found',
         context='This short code has not been defined',
         code=404
+    )
+
+@app.route('/x/<key>/upload')
+@log_request
+@route
+def upload_page(key):
+    with Database(GRAUBS_DB, tables=['files']) as db:
+        results = db.query(
+            db['files'].select.where(
+                db['files'].c.privkey == key
+            )
+        )
+        if not len(results) == 1:
+            return error(
+                'No such key',
+                context='Please contact an administrator to initiate a file upload',
+                code=403
+            )
+    return flask.make_response(
+        flask.render_template('upload.html', csrf=issue_csrf('upload'), privkey=key)
+    )
+
+@app.route('/_/upload', methods=['POST'])
+@csrf_protected('upload')
+@log_request
+# @enforce_content_length
+@route
+def upload_file():
+    data = flask.request.form
+    if 'privkey' not in data:
+        return error(
+            'Missing transfer key',
+            context='Please contact an administrator to initiate a file upload',
+            code=401
+        )
+    with Database(GRAUBS_DB, tables=['files']) as db:
+        results = db.query(
+            db['files'].select.where(
+                db['files'].c.privkey == data['privkey']
+            )
+        )
+        if not len(results) == 1:
+            return error(
+                'No such key',
+                context='Please contact an administrator to initiate a file upload',
+                code=403
+            )
+        pubkey = extract_pubkey(data['privkey'])
+        file = flask.request.files['file']
+        file.seek(0, 2)
+        filesize = file.tell()
+        if filesize > MAX_FILESIZE:
+            return error(
+                'Too large',
+                context='The uploaded file exceeded the limit of {} bytes'.format(MAX_FILESIZE),
+                code=400
+            )
+        file.seek(0, 0)
+        blob = file.read()
+        with open(os.path.join('/var/graubs/', pubkey), 'wb') as w:
+            w.write(blob)
+        db.execute(
+            db['files'].update.values(
+                filesize=filesize,
+                sha256=sha256(blob).hexdigest()
+            ).where(
+                db['files'].c.privkey == data['privkey']
+            )
+        )
+        if 'short_code' in data and data['short_code']:
+            if lookup_code(data['short_code']) is not None:
+                return error(
+                    'Taken',
+                    context='This short code is already in use',
+                    code=409
+                )
+            with Database(GRAUBS_DB, tables=['lookup']) as db:
+                db.insert('lookup', short_code=data['short_code'], destination='https://graubs.info/x/{}'.format(pubkey))
+            return flask.make_response(
+                flask.render_template('bound.html', binding=data['short_code']),
+                200
+            )
+        return flask.make_response(
+            flask.render_template('bound.html', binding='x/{}'.format(pubkey)),
+            200
+        )
+
+
+@app.route('/_/key', methods=['POST'])
+@csrf_protected('keypair')
+@log_request
+@enforce_content_length
+@route
+def key():
+    data = flask.request.form
+    pub, priv = keygen()
+    with Database(GRAUBS_DB, tables=['files']) as db:
+        db.insert('files', privkey=priv, pubkey=pub)
+    return flask.make_response(
+        {
+            'transfer-keys': {
+                'download': pub,
+                'upload': priv
+            }
+        },
+        200
     )
 
 @app.route('/_/bind', methods=['POST'])
@@ -126,6 +234,15 @@ def get_usage():
             ).sort_values("uses").set_index("short_code").to_html(),
             200
         )
+
+@app.route('/a/panel')
+@log_request
+@route
+def admin_panel():
+    return flask.make_response(
+        flask.render_template('admin.html', csrf_uploadkey=issue_csrf('keypair')),
+        200
+    )
 
 
 @app.route('/')

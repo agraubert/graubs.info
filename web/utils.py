@@ -50,8 +50,9 @@ def enforce_content_length(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if 'Content-Length' not in request.headers or int(request.headers['Content-Length']) > MAX_CONTENT_LENGTH:
-            return error("Request payload too large", data={'max-content-length': MAX_CONTENT_LENGTH}, code=413)
+        length = request.headers.get('Content-Length', None)
+        if length is None or int(length) > MAX_CONTENT_LENGTH:
+            return error("Request payload too large", data={'content-length': length, 'max-content-length': MAX_CONTENT_LENGTH}, code=413)
         return func(*args, **kwargs)
 
     return wrapper
@@ -76,7 +77,7 @@ def keygen():
     salt = os.urandom(16)
     for _ in range(10000):
        pubkey = hashlib.sha256(salt + pubkey).digest()
-    return base64.urlsafe_b64encode(pubkey), base64.urlsafe_b64encode(salt + privkey)
+    return base64.urlsafe_b64encode(pubkey).decode(), base64.urlsafe_b64encode(salt + privkey).decode()
 
 def extract_pubkey(priv):
     raw = base64.urlsafe_b64decode(priv)
@@ -84,7 +85,7 @@ def extract_pubkey(priv):
     priv = raw[16:]
     for _ in range(10000):
        priv = hashlib.sha256(salt + priv).digest()
-    return base64.urlsafe_b64encode(priv)
+    return base64.urlsafe_b64encode(priv).decode()
 
 
 def extract_auth():
