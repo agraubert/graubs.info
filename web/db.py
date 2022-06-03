@@ -47,7 +47,7 @@ class Database(object):
         Gets requested table name
         """
         if table not in self._tables:
-            raise NameError("No such table '{}'".format(table))
+            raise NameError("Table not loaded '{}'".format(table))
         return TableHandle(self._tables[table])
 
     def commit(self):

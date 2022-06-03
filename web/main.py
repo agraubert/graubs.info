@@ -105,20 +105,27 @@ def get_requests():
             200
         )
 # select lookup.short_code, count(*) as count, count(distinct requests.ip) as unq from requests join lookup on requests.url_path like concat("/", lookup.short_code, "?") group by lookup.short_code;
-# @app.route('/a/usage')
-# @route
-# @log_request
-# @authenticated
-# def get_requests():
-#     with Database(GRAUBS_DB, tables=['requests']) as db:
-#         return flask.make_response(
-#             db.query(
-#                 db['requests'].select.order_by(
-#                     sqla.desc(db['requests'].c.ID)
-#                 ).limit(1000)
-#             ).sort_values("ID").set_index("ID").to_html(),
-#             200
-#         )
+@app.route('/a/usage')
+@route
+@log_request
+@authenticated
+def get_usage():
+    with Database(GRAUBS_DB, tables=['lookup', 'requests']) as db:
+        return flask.make_response(
+            db.query(
+                sqla.select(
+                    db['lookup'].c.short_code,
+                    sqla.func.count(db['lookup'].c.short_code).label('uses'),
+                    sqla.func.count(sqla.func.distinct(db['requests'].c.ip)).label('distinct_users')
+                ).select_from(db['requests'].table).join(
+                    db['lookup'].table,
+                    onclause=db['requests'].c.url_path.like(sqla.func.concat("/", db['lookup'].c.short_code, "%"))
+                ).group_by(db['lookup'].c.short_code).where(
+                    db['requests'].c.response_code == 302
+                )
+            ).sort_values("uses").set_index("short_code").to_html(),
+            200
+        )
 
 
 @app.route('/')
