@@ -3,9 +3,11 @@ import os
 import validators
 import sqlalchemy as sqla
 import re
+from agutil import byteSize
 from hashlib import sha256
+from werkzeug.utils import secure_filename
 from .db import Database
-from .utils import log_request, error, route, enforce_content_length, csrf_protected, authenticated, issue_csrf, issue_token, keygen, extract_pubkey
+from .utils import log_request, error, route, enforce_content_length, csrf_protected, authenticated, issue_csrf, issue_token, keygen, extract_pubkey, getpath
 
 short_code_pattern = re.compile(r'\w{2,127}')
 MAX_FILESIZE = 2 * 1024 * 1024 * 1024
@@ -103,7 +105,7 @@ def upload_file():
             )
         file.seek(0, 0)
         blob = file.read()
-        with open(os.path.join('/var/graubs/', pubkey), 'wb') as w:
+        with open(os.path.join(getpath(pubkey), os.path.basename(secure_filename(file.filename))), 'wb') as w:
             w.write(blob)
         db.execute(
             db['files'].update.values(
@@ -196,6 +198,56 @@ def bind():
         flask.render_template('bound.html', binding=short_code),
         200
     )
+
+@app.route('/x/<key>')
+@log_request
+@route
+def download_page(key):
+    with Database(GRAUBS_DB, tables=['files']) as db:
+        results = db.query(
+            db['files'].select.where(
+                db['files'].c.pubkey == key
+            )
+        )
+        if not len(results) == 1:
+            return error(
+                "No such file",
+                code=404
+            )
+        if results.iloc[0]['filesize'] is None:
+            return error(
+                'Not available',
+                context='This file transfer has been initiated, but the upload has not yet been completed',
+                code=404
+            )
+        filename = os.listdir(getpath(key))
+    return flask.make_response(
+        flask.render_template(
+            'download.html',
+            filename=filename[0],
+            filesize=byteSize(results.iloc[0]['filesize']),
+            sha256=results.iloc[0]['sha256'],
+            pubkey=key,
+            csrf=issue_csrf('download')
+        ),
+        200
+    )
+
+@app.route('/_/download', methods=['POST'])
+@csrf_protected('download')
+@log_request
+@enforce_content_length
+@route
+def download():
+    data = flask.request.form
+    if 'pubkey' not in data:
+        return error(
+            'Missing required form parameter "pubkey"',
+            code=400
+        )
+    path = getpath(data['pubkey'])
+    filename = os.listdir(path)
+    return flask.send_from_directory(path, filename[0])
 
 
 @app.route('/a/requests')

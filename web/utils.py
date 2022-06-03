@@ -12,6 +12,12 @@ import hashlib
 TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
 MAX_CONTENT_LENGTH = 2048
 
+def getpath(pubkey):
+    path = os.path.join('/var/graubs', pubkey[:2], pubkey[2:4], pubkey[4:])
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    return path
+
 def get_remote_addr():
     return (
         request.headers['X-Real-IP']

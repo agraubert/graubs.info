@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Graubs.info</title>
+    <style media="screen" lang="css">
+
+    </style>
+  </head>
+  <body>
+    <h1>Graubs.info</h1>
+    <h3>File Download</h3>
+    <br>
+    <br>
+		<p>Filename: {{ filename }}</p>
+		<p>Filesize: {{ filesize }}</p>
+		<p>File Hash (SHA256): {{ sha256 }}</p>
+    <form class="" action="/_/download" method="post" enctype="multipart/form-data">
+      <p>
+        <input type="hidden" name="csrf" value="" id='csrf'/>
+        <input type="hidden" name="pubkey" value="" id='pubkey'/>
+      </p>
+      <p>
+        <input type="submit" name="submit" value="Download"/>
+      </p>
+    </form>
+    <a href="p">Privacy Policy</a>
+    <script type='application/javascript'>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('csrf').value = "{{ csrf }}";
+        document.getElementById('pubkey').value = "{{ pubkey }}";
+      })
+    </script>
+
+  </body>
+</html>
