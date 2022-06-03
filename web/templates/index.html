@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8">
     <title>Graubs.info</title>
+    <style media="screen" lang="css">
+
+    </style>
   </head>
   <body>
     <h1>Graubs.info</h1>
@@ -12,11 +15,11 @@
     <form class="" action="_/bind" method="post">
       <p>
         <label for="short_code">Short Code</label>
-        <input type="text" name="short_code" value="" id='short_code'/>
+        <input type="text" name="short_code" value="" id='short_code' required pattern="\w{2,127}" placeholder="2-127 letters or numbers"/>
       </p>
       <p>
         <label for="url">Destination URL</label>
-        <input type="text" name="url" value="" id='url'/>
+        <input type="text" name="url" value="" id='url' required/>
       </p>
       <p>
         <input type="hidden" name="csrf" value="" id='csrf'/>

@@ -2,8 +2,11 @@ import flask
 import os
 import validators
 import sqlalchemy as sqla
+import re
 from .db import Database
 from .utils import log_request, error, route, enforce_content_length, csrf_protected, authenticated, issue_csrf, issue_token
+
+short_code_pattern = re.compile(r'\w{2,127}')
 
 app = flask.Flask('graubs-info', static_folder='/opt/graubs/static/', template_folder='/opt/graubs/templates/')
 
@@ -61,6 +64,12 @@ def bind():
             context='Short code must be 2-127 printable ASCII characters',
             code=400
         )
+    if not short_code_pattern.match(short_code):
+        return error(
+            "Invalid short code",
+            context="Short code must be 2-127 letters or numbers. No special characters allowed",
+            code=400
+        )
     if lookup_code(short_code) is not None:
         return error(
             'Taken',
@@ -75,7 +84,10 @@ def bind():
         )
     with Database(GRAUBS_DB, tables=['lookup']) as db:
         db.insert('lookup', short_code=short_code, destination=data['url'])
-    return flask.make_response('OK', 200)
+    return flask.make_response(
+        flask.render_template('bound.html', binding=short_code),
+        200
+    )
 
 
 @app.route('/a/requests')
@@ -92,6 +104,21 @@ def get_requests():
             ).sort_values("ID").set_index("ID").to_html(),
             200
         )
+# select lookup.short_code, count(*) as count, count(distinct requests.ip) as unq from requests join lookup on requests.url_path like concat("/", lookup.short_code, "?") group by lookup.short_code;
+# @app.route('/a/usage')
+# @route
+# @log_request
+# @authenticated
+# def get_requests():
+#     with Database(GRAUBS_DB, tables=['requests']) as db:
+#         return flask.make_response(
+#             db.query(
+#                 db['requests'].select.order_by(
+#                     sqla.desc(db['requests'].c.ID)
+#                 ).limit(1000)
+#             ).sort_values("ID").set_index("ID").to_html(),
+#             200
+#         )
 
 
 @app.route('/')
