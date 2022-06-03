@@ -318,5 +318,10 @@ def privacy():
 def not_found(url):
     return flask.current_app.send_static_file('404.html')
 
+# Admin panel options
+# Link to requests page
+# Link to usage page
+# Button to genereate new tokens
+# Button to login (expires current token, sets cookie with new token)
 
 app.run(host='0.0.0.0', port=int(os.environ.get('GRAUBS_PORT', 8080)))
