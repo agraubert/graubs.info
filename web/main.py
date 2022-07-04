@@ -147,8 +147,8 @@ def key():
     return flask.make_response(
         {
             'transfer-keys': {
-                'download': pub,
-                'upload': priv
+                'download': 'https://{}/x/{}'.format(flask.request.headers.get('Host', 'graubs.info'), pub),
+                'upload': 'https://{}/x/{}/upload'.format(flask.request.headers.get('Host', 'graubs.info'), priv)
             }
         },
         200
@@ -206,7 +206,7 @@ def download_page(key):
     with Database(GRAUBS_DB, tables=['files']) as db:
         results = db.query(
             db['files'].select.where(
-                db['files'].c.pubkey == key
+                (db['files'].c.pubkey == key) | (db['files'].c.pubkey == key)
             )
         )
         if not len(results) == 1:
